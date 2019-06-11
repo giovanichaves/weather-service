@@ -1,4 +1,4 @@
-package com.gardena.smartgarden.weatherservice.client.darksky;
+package com.gardena.smartgarden.weatherservice.client.openweather;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,14 +19,14 @@ import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-public class DarkSkyApiClient implements WeatherProvider {
+public class OpenWeatherApiClient implements WeatherProvider {
 
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DarkSkyApiClient.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(OpenWeatherApiClient.class);
 
-    private final DarkSkyProperties properties;
-    private RestTemplate restTemplate;
+    private static final String BASE_URL = "https://api.openweathermap.org/data/2.5";
+    private final OpenWeatherProperties properties;
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    private static final String BASE_URL = "https://api.darksky.net";
 
     @Override
     public Conditions getWeatherConditions(Coords coords) {
@@ -36,45 +36,40 @@ public class DarkSkyApiClient implements WeatherProvider {
     }
 
     private JsonNode fetchResponse(String url) {
-        LOGGER.debug("Fetching data darksky");
+        LOGGER.debug("Fetching data openweather");
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        LOGGER.debug("Received DarkSky response: '{}'", response);
+        LOGGER.debug("Received OpenWeather response: '{}'", response);
 
-        Metrics.counter("weatherService_darkSkyApi_statusCode", "statusCode", String.valueOf(response.getStatusCode().value())).increment();
+        Metrics.counter("weatherService_openWeatherApi_statusCode", "statusCode", String.valueOf(response.getStatusCode().value())).increment();
 
         if (response.getStatusCode() != HttpStatus.OK) {
             LOGGER.error("Could not get response: {}", url);
-            throw new DarkSkyApiException("Could not get response");
+            throw new OpenWeatherApiException("Could not get response");
         }
 
         try {
             return objectMapper.readTree(response.getBody());
         } catch (IOException e) {
-            Metrics.counter("weatherService_darkSkyApi_error_parsingPayload", "type", "IOException").increment();
+            Metrics.counter("weatherService_openWeatherApi_error_parsingPayload", "type", "IOException").increment();
             LOGGER.error("Invalid response: {}", url);
-            throw new DarkSkyApiException("Invalid response");
+            throw new OpenWeatherApiException("Invalid response");
         }
     }
 
     private Conditions parseConditionResponse(JsonNode response) {
-        final JsonNode errorNode = response.at("/error");
-        if (!errorNode.isMissingNode()) {
-            Metrics.counter("weatherService_darkSkyApi_error_parsingPayload", "type", "errorNode").increment();
-            LOGGER.error("Received error response. Description: '{}'", errorNode.asText());
-            throw new DarkSkyApiException(errorNode.asText());
-        }
+        JsonNode temperatureNode = response.at("/main/temp");
 
-        JsonNode temperatureNode = response.at("/currently/temperature");
         if (temperatureNode.isMissingNode()) {
-            Metrics.counter("weatherService_darkSkyApi_error_parsingPayload", "type", "temperatureNode").increment();
+            Metrics.counter("weatherService_openWeatherApi_error_parsingPayload", "type", "temperatureNode").increment();
             LOGGER.error("Received response without temperature.");
-            throw new DarkSkyApiException("Received response without temperature.");
+            throw new OpenWeatherApiException("Received response without temperature.");
         }
 
         return new Conditions(temperatureNode.doubleValue());
     }
 
     private String requestUrl(Coords coords) {
-        return String.format("%s/forecast/%s/%s?units=si&lang=en", BASE_URL, properties.getApiKey(), coords.toString());
+        return String.format("%s/weather?appid=%s&lat=%s&lon=%s&units=metric", BASE_URL, properties.getApiKey(), coords.getLatitude(), coords.getLongitude());
     }
+
 }

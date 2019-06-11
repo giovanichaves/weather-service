@@ -2,6 +2,13 @@ package com.gardena.smartgarden.weatherservice.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+@EqualsAndHashCode
 public class Condition {
 
     /**
@@ -10,11 +17,7 @@ public class Condition {
     @JsonProperty
     private Double temperature;
 
-    public Condition(Double temperature) {
-        this.temperature = temperature;
-    }
+    @JsonProperty(value = "frost_warning")
+    private boolean frostWarning;
 
-    public Double getTemperature() {
-        return temperature;
-    }
 }
