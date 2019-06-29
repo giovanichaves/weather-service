@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Service
 public class OpenWeatherApiClient implements WeatherApiClient {
@@ -65,14 +66,17 @@ public class OpenWeatherApiClient implements WeatherApiClient {
         this.objectMapper = objectMapper;
     }
 
-    public Condition getCondition(Double latitude, Double longitude) {
-        String url = requestUrl(latitude, longitude);
+    public Optional<Condition> getCondition(Double latitude, Double longitude) {
+        try {
+            String url = requestUrl(latitude, longitude);
+            Conditions conditions = parseConditionResponse(fetchResponse(url));
 
-        Conditions conditions = parseConditionResponse(fetchResponse(url));
-
-        return new Condition(
-                conditions.getTempC()
-        );
+            return Optional.of(new Condition(
+                    conditions.getTempC()
+            ));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private JsonNode fetchResponse(String url) {
