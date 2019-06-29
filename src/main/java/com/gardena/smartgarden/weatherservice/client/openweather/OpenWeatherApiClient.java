@@ -23,7 +23,7 @@ public class OpenWeatherApiClient implements WeatherApiClient {
     private final OpenWeatherProperties properties;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private static final String BASE_URL = "https://api.darksky.net";
+    private static final String BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
 
     private final ResponseHandler<JsonNode> jsonNodeResponseHandler = new ResponseHandler<JsonNode>() {
         @Override
@@ -40,14 +40,21 @@ public class OpenWeatherApiClient implements WeatherApiClient {
             }
         }
 
-        private void assertNoError(final JsonNode response) {
-            final JsonNode errorNode = response.at("/error");
-            if (!errorNode.isMissingNode()) {
+        private void assertNoError(final JsonNode content) {
+            final JsonNode errorCode = content.at("/cod");
+            if (!errorCode.isMissingNode() && errorCode.asText().equals("200")) {
+                return; // all good
+            }
+
+            final JsonNode errorNode = content.at("/message");
+            if (!errorNode.isMissingNode() && !errorCode.isMissingNode()) {
                 if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Received error response. Description: '{}'", errorNode.asText());
+                    LOGGER.info("Received error response. Code: {}, Description: '{}'", errorCode.asText(), errorNode.asText());
                 }
 
                 throw new OpenWeatherApiException(errorNode.asText());
+            } else {
+                throw new OpenWeatherApiException("missing error message or code");
             }
         }
     };
@@ -59,7 +66,7 @@ public class OpenWeatherApiClient implements WeatherApiClient {
     }
 
     public Condition getCondition(Double latitude, Double longitude) {
-        String url = requestUrl(String.format("%s,%s", latitude, longitude));
+        String url = requestUrl(latitude, longitude);
 
         Conditions conditions = parseConditionResponse(fetchResponse(url));
 
@@ -72,7 +79,7 @@ public class OpenWeatherApiClient implements WeatherApiClient {
         HttpGet httpGet = new HttpGet(url);
         try {
             JsonNode response = httpClient.execute(httpGet, jsonNodeResponseHandler);
-            LOGGER.debug("Received Dark Sky response: '{}'", response);
+            LOGGER.debug("Received OpenWeather response: '{}'", response);
 
             return response;
         } catch (IOException e) {
@@ -82,12 +89,12 @@ public class OpenWeatherApiClient implements WeatherApiClient {
     }
 
     private Conditions parseConditionResponse(final JsonNode response) {
-        JsonNode observation = response.at("/currently");
+        JsonNode observation = response.at("/main");
 
-        return new Conditions(observation.at("/temperature").doubleValue());
+        return new Conditions(observation.at("/temp").doubleValue());
     }
 
-    private String requestUrl(String endpoint) {
-        return String.format("%s/forecast/%s/%s?units=si&lang=en", BASE_URL, properties.getApiKey(), endpoint);
+    private String requestUrl(double latitude, double longitude) {
+        return String.format("%s?lat=%f&lon=%f&units=metric&apikey=%s", BASE_URL, latitude, longitude, properties.getApiKey());
     }
 }
