@@ -1,7 +1,8 @@
 package com.gardena.smartgarden.weatherservice.controller;
 
 import com.gardena.smartgarden.weatherservice.api.Condition;
-import com.gardena.smartgarden.weatherservice.client.darksky.DarkSkyApiClient;
+import com.gardena.smartgarden.weatherservice.client.common.WeatherApiClient;
+import com.gardena.smartgarden.weatherservice.client.openweather.OpenWeatherApiClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,9 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class WeatherController {
 
-    private final DarkSkyApiClient weatherApiClient;
+    private final WeatherApiClient weatherApiClient;
 
-    public WeatherController(DarkSkyApiClient weatherApiClient) {
+    public WeatherController(OpenWeatherApiClient weatherApiClient) {
         this.weatherApiClient = weatherApiClient;
     }
 

@@ -1,4 +1,4 @@
-package com.gardena.smartgarden.weatherservice.client.darksky;
+package com.gardena.smartgarden.weatherservice.client.openweather;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,11 +16,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 
 @Service
-public class DarkSkyApiClient implements WeatherApiClient {
+public class OpenWeatherApiClient implements WeatherApiClient {
 
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DarkSkyApiClient.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(OpenWeatherApiClient.class);
 
-    private final DarkSkyProperties properties;
+    private final OpenWeatherProperties properties;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private static final String BASE_URL = "https://api.darksky.net";
@@ -47,12 +47,12 @@ public class DarkSkyApiClient implements WeatherApiClient {
                     LOGGER.info("Received error response. Description: '{}'", errorNode.asText());
                 }
 
-                throw new DarkSkyApiException(errorNode.asText());
+                throw new OpenWeatherApiException(errorNode.asText());
             }
         }
     };
 
-    public DarkSkyApiClient(DarkSkyProperties properties, HttpClient httpClient, ObjectMapper objectMapper) {
+    public OpenWeatherApiClient(OpenWeatherProperties properties, HttpClient httpClient, ObjectMapper objectMapper) {
         this.properties = properties;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
@@ -77,7 +77,7 @@ public class DarkSkyApiClient implements WeatherApiClient {
             return response;
         } catch (IOException e) {
             LOGGER.warn("Could not get response: {}", url, e);
-            throw new DarkSkyApiException("Could not get response.");
+            throw new OpenWeatherApiException("Could not get response.");
         }
     }
 
