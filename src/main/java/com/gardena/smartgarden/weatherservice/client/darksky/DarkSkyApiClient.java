@@ -60,12 +60,9 @@ public class DarkSkyApiClient {
         String url = requestUrl(String.format("%s,%s", latitude, longitude));
 
         Conditions conditions = parseConditionResponse(fetchResponse(url));
-        double tempC = conditions.getTempC();
-        boolean frostWarning = tempC < 0;
-
 
         return new Condition(
-                tempC, frostWarning
+                conditions.getTempC()
         );
     }
 

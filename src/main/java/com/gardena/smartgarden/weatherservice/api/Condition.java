@@ -1,6 +1,5 @@
 package com.gardena.smartgarden.weatherservice.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Condition {
@@ -16,18 +15,14 @@ public class Condition {
     }
 
     /**
-     * Indicates whether temp is below 0 °C
+     * Computed property to indicates whether temp is below 0 °C
      */
     @JsonProperty("frost_warning")
-    private Boolean frostWarning;
-
-    @JsonIgnore
     public Boolean getFrostWarning() {
-        return frostWarning;
+        return temperature < 0;
     }
 
-    public Condition(Double temperature, Boolean frostWarning) {
+    public Condition(Double temperature) {
         this.temperature = temperature;
-        this.frostWarning = frostWarning;
     }
 }
