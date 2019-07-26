@@ -1,4 +1,4 @@
-# Gardena smart system weather-service
+# weather-service
 
 ## Building & running
 
